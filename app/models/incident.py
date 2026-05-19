@@ -1,7 +1,8 @@
-from datetime import datetime
-from sqlalchemy import String, Text, Float, DateTime, JSON, Integer, ForeignKey
+from datetime import datetime, timezone
+from sqlalchemy import String, Text, Float, DateTime, JSON, Integer, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
+from app.models.enums import Severity, IncidentStatus
 
 
 class Incident(Base):
@@ -11,13 +12,19 @@ class Incident(Base):
     event_id: Mapped[int] = mapped_column(Integer, ForeignKey("events.id"))
     title: Mapped[str] = mapped_column(String(255))
     risk_score: Mapped[float] = mapped_column(Float, default=0.0)
-    severity: Mapped[str] = mapped_column(String(10), default="low")  # low/medium/high
+    severity: Mapped[Severity] = mapped_column(Enum(Severity), default=Severity.low)
     rule_score: Mapped[float] = mapped_column(Float, default=0.0)
     ml_score: Mapped[float] = mapped_column(Float, default=0.0)
     graph_score: Mapped[float] = mapped_column(Float, default=0.0)
     anomaly_score: Mapped[float] = mapped_column(Float, default=0.0)
     rule_flags: Mapped[list] = mapped_column(JSON, default=list)
-    status: Mapped[str] = mapped_column(String(50), default="new")  # new/investigating/confirmed/rejected
+    status: Mapped[IncidentStatus] = mapped_column(Enum(IncidentStatus), default=IncidentStatus.new)
     analyst_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
