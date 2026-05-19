@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import String, Text, Float, DateTime, JSON, Integer, ForeignKey, Enum
+from sqlalchemy import String, Text, Float, DateTime, JSON, Integer, ForeignKey, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 from app.models.enums import Severity, IncidentStatus
@@ -7,6 +7,10 @@ from app.models.enums import Severity, IncidentStatus
 
 class Incident(Base):
     __tablename__ = "incidents"
+    __table_args__ = (
+        Index("ix_incidents_event_id", "event_id"),
+        Index("ix_incidents_status", "status"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer, ForeignKey("events.id"))

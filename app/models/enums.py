@@ -12,3 +12,8 @@ class IncidentStatus(str, enum.Enum):
     investigating = "investigating"
     confirmed = "confirmed"
     rejected = "rejected"
+
+
+class AuditEntityType(str, enum.Enum):
+    event = "event"
+    incident = "incident"

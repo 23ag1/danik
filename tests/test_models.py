@@ -1,33 +1,9 @@
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import Base
 from app.models.event import Event
 from app.models.incident import Incident
 from app.models.audit import AuditLog
-from app.models.enums import Severity, IncidentStatus
-
-TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
-
-
-@pytest.fixture
-async def db_session():
-    engine = create_async_engine(
-        TEST_DB_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    try:
-        async with session_factory() as session:
-            yield session
-    finally:
-        await engine.dispose()
+from app.models.enums import Severity, IncidentStatus, AuditEntityType
 
 
 async def test_create_event(db_session: AsyncSession):
@@ -46,8 +22,7 @@ async def test_create_event(db_session: AsyncSession):
 async def test_create_incident(db_session: AsyncSession):
     event = Event(source="vk", author_hash="xyz789hash")
     db_session.add(event)
-    await db_session.commit()
-    await db_session.refresh(event)
+    await db_session.flush()  # assigns event.id without committing
 
     incident = Incident(
         event_id=event.id,
@@ -72,7 +47,7 @@ async def test_create_incident(db_session: AsyncSession):
 async def test_create_audit_log(db_session: AsyncSession):
     log = AuditLog(
         action="incident.confirmed",
-        entity_type="incident",
+        entity_type=AuditEntityType.incident,
         entity_id=42,
         actor="analyst_hash_001",
         details={"old_status": "new", "new_status": "confirmed"},
@@ -83,13 +58,13 @@ async def test_create_audit_log(db_session: AsyncSession):
 
     assert log.id is not None
     assert log.action == "incident.confirmed"
-    assert log.entity_type == "incident"
+    assert log.entity_type == AuditEntityType.incident
     assert log.details["old_status"] == "new"
     assert log.created_at is not None
 
 
 async def test_audit_log_default_actor(db_session: AsyncSession):
-    log = AuditLog(action="event.ingested", entity_type="event", entity_id=1)
+    log = AuditLog(action="event.ingested", entity_type=AuditEntityType.event, entity_id=1)
     db_session.add(log)
     await db_session.commit()
     await db_session.refresh(log)
