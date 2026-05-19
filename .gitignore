@@ -1,5 +1,33 @@
-
-# Beads / Dolt files (added by bd init)
-.dolt/
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.coverage
+htmlcov/
+.pytest_cache/
 *.db
+
+# ML artifacts (regenerate: python -m app.ml.train)
+models/*.joblib
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Beads / secrets
+.dolt/
 .beads-credential-key
+.env
+
+# IDE / OS
+.idea/
+.DS_Store
+
+# Diploma extract helpers (optional local only)
+docs/dip_text_utf8.txt
+docs/dip_extract.txt
+docs/dip_sections.txt
+docs/dip_requirements_extract.txt
+docs/section_*.txt

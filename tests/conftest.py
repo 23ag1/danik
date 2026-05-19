@@ -6,8 +6,22 @@ from sqlalchemy.pool import StaticPool
 import app.models  # noqa: F401
 from app.main import app
 from app.database import Base, get_db
+from app.ml.train import ensure_model_trained
+from app.pipeline.graph_store import reset_fraud_graph
 
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def trained_ml_model():
+    ensure_model_trained()
+
+
+@pytest.fixture(autouse=True)
+def isolated_fraud_graph():
+    reset_fraud_graph()
+    yield
+    reset_fraud_graph()
 
 
 @pytest.fixture

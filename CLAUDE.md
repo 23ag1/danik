@@ -40,10 +40,10 @@ tests/             — pytest, цель покрытия >70%
 - Текст: phone → `<PHONE>`, email → `<EMAIL>`, url → `<URL>`
 
 ## Beads Tasks
-- `fraud_monitor-op0` — Фаза 1: Ядро (текущая)
-- `fraud_monitor-2cb` — Фаза 2: ML + граф
-- `fraud_monitor-6q0` — Фаза 3: React фронтенд
-- `fraud_monitor-0v3` — Фаза 4: Доводка
+- `fraud_monitor-op0` — Фаза 1: Ядро ✓
+- `fraud_monitor-2cb` — Фаза 2: ML + граф ✓
+- `fraud_monitor-6q0` — Фаза 3: React фронтенд ✓
+- `fraud_monitor-0v3` — Фаза 4: Доводка (запустить scripts/finish_phase4.sh)
 
 ## Success Metrics
 | | Минимум | Цель |
