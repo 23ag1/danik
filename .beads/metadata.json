@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "fraud_monitor",
+  "project_id": "671f2cee-52e9-4d42-9dbe-d7210620860b"
+}
