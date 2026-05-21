@@ -1,4 +1,4 @@
-import type { Event, EventCreate, Incident, IncidentStatus } from "./types";
+import type { Event, EventCreate, Incident, IncidentStatus, MonitoredSource } from "./types";
 
 const BASE = "";
 
@@ -23,6 +23,13 @@ export const api = {
       body: JSON.stringify({ status, analyst_comment }),
     }),
   getEvents: () => request<Event[]>("/events"),
+  getSources: () => request<MonitoredSource[]>("/sources"),
+  createSource: (body: { name: string; url: string; interval_sec?: number }) =>
+    request<MonitoredSource>("/sources", { method: "POST", body: JSON.stringify(body) }),
+  patchSource: (id: number, body: { enabled?: boolean; interval_sec?: number }) =>
+    request<MonitoredSource>(`/sources/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteSource: (id: number) => request<void>(`/sources/${id}`, { method: "DELETE" }),
+  fetchSource: (id: number) => request<{ ingested: number }>(`/sources/${id}/fetch`, { method: "POST" }),
   createEvent: (body: EventCreate) =>
     request<{ id: number; incident_id: number | null; risk_score: number }>("/events", {
       method: "POST",

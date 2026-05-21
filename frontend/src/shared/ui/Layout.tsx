@@ -5,6 +5,7 @@ const links = [
   { to: "/events", label: "Все события" },
   { to: "/incidents", label: "Инциденты" },
   { to: "/ingest", label: "Загрузка" },
+  { to: "/sources", label: "Источники" },
 ];
 
 export function Layout() {

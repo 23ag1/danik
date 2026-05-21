@@ -5,6 +5,7 @@ import { IncidentsPage } from "../pages/IncidentsPage";
 import { IncidentDetailPage } from "../pages/IncidentDetailPage";
 import { IngestPage } from "../pages/IngestPage";
 import { EventsPage } from "../pages/EventsPage";
+import { SourcesPage } from "../pages/SourcesPage";
 
 export function App() {
   return (
@@ -16,6 +17,7 @@ export function App() {
           <Route path="incidents" element={<IncidentsPage />} />
           <Route path="incidents/:id" element={<IncidentDetailPage />} />
           <Route path="ingest" element={<IngestPage />} />
+          <Route path="sources" element={<SourcesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

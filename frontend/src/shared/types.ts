@@ -28,6 +28,16 @@ export interface Event {
   created_at: string;
 }
 
+export interface MonitoredSource {
+  id: number;
+  name: string;
+  url: string;
+  enabled: boolean;
+  interval_sec: number;
+  last_fetched_at: string | null;
+  created_at: string;
+}
+
 export interface EventCreate {
   source: string;
   user_id: string;
