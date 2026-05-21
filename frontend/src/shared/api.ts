@@ -1,4 +1,4 @@
-import type { EventCreate, Incident, IncidentStatus } from "./types";
+import type { Event, EventCreate, Incident, IncidentStatus } from "./types";
 
 const BASE = "";
 
@@ -22,6 +22,7 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status, analyst_comment }),
     }),
+  getEvents: () => request<Event[]>("/events"),
   createEvent: (body: EventCreate) =>
     request<{ id: number; incident_id: number | null; risk_score: number }>("/events", {
       method: "POST",

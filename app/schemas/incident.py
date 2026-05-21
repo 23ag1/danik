@@ -9,6 +9,7 @@ class IncidentRead(BaseModel):
     id: int
     event_id: int
     title: str
+    raw_text: str
     risk_score: float
     severity: Severity
     rule_score: float

@@ -4,6 +4,10 @@ import { api } from "../shared/api";
 import type { Incident, IncidentStatus, Severity } from "../shared/types";
 import { Badge } from "../shared/ui/Badge";
 
+function truncate(text: string, n = 100) {
+  return text.length <= n ? text : text.slice(0, n) + "…";
+}
+
 export function IncidentsPage() {
   const [items, setItems] = useState<Incident[]>([]);
   const [status, setStatus] = useState<IncidentStatus | "">("");
@@ -18,7 +22,7 @@ export function IncidentsPage() {
     return items.filter((i) => {
       if (status && i.status !== status) return false;
       if (severity && i.severity !== severity) return false;
-      if (q && !i.title.toLowerCase().includes(q.toLowerCase())) return false;
+      if (q && !i.title.toLowerCase().includes(q.toLowerCase()) && !i.raw_text.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
   }, [items, status, severity, q]);
@@ -63,7 +67,8 @@ export function IncidentsPage() {
         <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
           <tr>
             <th className="px-4 py-3">ID</th>
-            <th className="px-4 py-3">Название</th>
+            <th className="px-4 py-3">Триггер</th>
+            <th className="px-4 py-3">Текст</th>
             <th className="px-4 py-3">Risk</th>
             <th className="px-4 py-3">Severity</th>
             <th className="px-4 py-3">Status</th>
@@ -78,6 +83,7 @@ export function IncidentsPage() {
                   {inc.title}
                 </Link>
               </td>
+              <td className="px-4 py-3 max-w-xs text-zinc-600 text-xs">{truncate(inc.raw_text)}</td>
               <td className="px-4 py-3 font-mono">{inc.risk_score.toFixed(2)}</td>
               <td className="px-4 py-3">
                 <Badge label={inc.severity} />

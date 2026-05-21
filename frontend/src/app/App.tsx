@@ -4,6 +4,7 @@ import { DashboardPage } from "../pages/DashboardPage";
 import { IncidentsPage } from "../pages/IncidentsPage";
 import { IncidentDetailPage } from "../pages/IncidentDetailPage";
 import { IngestPage } from "../pages/IngestPage";
+import { EventsPage } from "../pages/EventsPage";
 
 export function App() {
   return (
@@ -11,6 +12,7 @@ export function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="events" element={<EventsPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
           <Route path="incidents/:id" element={<IncidentDetailPage />} />
           <Route path="ingest" element={<IngestPage />} />

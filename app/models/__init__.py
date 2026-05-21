@@ -2,5 +2,11 @@ from app.models.event import Event
 from app.models.incident import Incident
 from app.models.audit import AuditLog
 from app.models.enums import Severity, IncidentStatus, AuditEntityType
+from app.models.source import MonitoredSource
+from app.models.seen_item import SeenItem
 
-__all__ = ["Event", "Incident", "AuditLog", "Severity", "IncidentStatus", "AuditEntityType"]
+__all__ = [
+    "Event", "Incident", "AuditLog",
+    "Severity", "IncidentStatus", "AuditEntityType",
+    "MonitoredSource", "SeenItem",
+]

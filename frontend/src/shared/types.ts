@@ -5,6 +5,7 @@ export interface Incident {
   id: number;
   event_id: number;
   title: string;
+  raw_text: string;
   risk_score: number;
   severity: Severity;
   rule_score: number;
@@ -16,6 +17,15 @@ export interface Incident {
   analyst_comment: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Event {
+  id: number;
+  source: string;
+  author_hash: string;
+  raw_text: string;
+  url: string | null;
+  created_at: string;
 }
 
 export interface EventCreate {

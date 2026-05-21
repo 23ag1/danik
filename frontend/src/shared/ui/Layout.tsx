@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 
 const links = [
   { to: "/", label: "Сводка" },
+  { to: "/events", label: "Все события" },
   { to: "/incidents", label: "Инциденты" },
   { to: "/ingest", label: "Загрузка" },
 ];

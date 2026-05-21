@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -7,7 +8,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import create_tables, engine
-from app.routers import events_router, incidents_router
+from app.routers import events_router, incidents_router, sources_router
+from app.tasks.scheduler import collector_loop
 import app.models  # noqa: F401 — registers all models with Base.metadata
 
 FRONTEND_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
@@ -16,7 +18,10 @@ FRONTEND_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_tables()
+    task = asyncio.create_task(collector_loop())
     yield
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
     await engine.dispose()
 
 
@@ -35,6 +40,7 @@ app.add_middleware(
 )
 app.include_router(events_router)
 app.include_router(incidents_router)
+app.include_router(sources_router)
 
 
 @app.get("/health")

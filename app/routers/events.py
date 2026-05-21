@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -8,11 +9,17 @@ from app.models.incident import Incident
 from app.models.audit import AuditLog
 from app.pipeline.graph_store import get_fraud_graph
 from app.pipeline.scoring import compute_risk_score, risk_to_severity
-from app.schemas.event import EventCreate, EventResponse
+from app.schemas.event import EventCreate, EventRead, EventResponse
 from app.services.pipeline_runner import process_event_text
 from app.utils import hash_author
 
 router = APIRouter(prefix="/events", tags=["events"])
+
+
+@router.get("", response_model=list[EventRead])
+async def list_events(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Event).order_by(Event.created_at.desc()))
+    return list(result.scalars().all())
 
 
 def _incident_title(severity: Severity, rule_flags: list[str]) -> str:

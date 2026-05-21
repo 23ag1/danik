@@ -24,3 +24,14 @@ class EventResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class EventRead(BaseModel):
+    id: int
+    source: str
+    author_hash: str
+    raw_text: str
+    url: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
