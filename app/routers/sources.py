@@ -20,7 +20,8 @@ async def list_sources(db: AsyncSession = Depends(get_db)):
 async def create_source(body: SourceCreate, db: AsyncSession = Depends(get_db)):
     source = MonitoredSource(
         name=body.name,
-        url=str(body.url),
+        url=body.url,
+        source_type=body.source_type,
         interval_sec=body.interval_sec,
         enabled=body.enabled,
     )
@@ -41,6 +42,8 @@ async def patch_source(
         source.enabled = body.enabled
     if body.interval_sec is not None:
         source.interval_sec = body.interval_sec
+    if body.name is not None:
+        source.name = body.name
     await db.commit()
     await db.refresh(source)
     return source

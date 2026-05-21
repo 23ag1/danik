@@ -10,6 +10,7 @@ class MonitoredSource(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
     url: Mapped[str] = mapped_column(String(512), unique=True)
+    source_type: Mapped[str] = mapped_column(String(20), default="rss")  # "rss" | "telegram"
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     interval_sec: Mapped[int] = mapped_column(Integer, default=300)
     last_fetched_at: Mapped[datetime | None] = mapped_column(

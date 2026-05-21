@@ -32,6 +32,7 @@ export interface MonitoredSource {
   id: number;
   name: string;
   url: string;
+  source_type: "rss" | "telegram";
   enabled: boolean;
   interval_sec: number;
   last_fetched_at: string | null;

@@ -11,17 +11,30 @@ from app.models.source import MonitoredSource
 logger = logging.getLogger(__name__)
 
 _CHECK_INTERVAL = 60  # seconds between scheduler ticks
+_tg_task: asyncio.Task | None = None
 
 
 async def collector_loop() -> None:
-    """Background task: every _CHECK_INTERVAL seconds, poll all due RSS sources."""
+    """Background task: RSS polling + optional Telegram listener."""
+    global _tg_task
     logger.info("collector_loop started")
+    from app.collectors.telegram import start_telegram_collector
+    _tg_task = asyncio.create_task(start_telegram_collector())
     while True:
         await asyncio.sleep(_CHECK_INTERVAL)
         try:
             await _run_due_sources()
         except Exception as exc:
             logger.error("collector_loop tick error: %s", exc)
+
+
+async def stop_collectors() -> None:
+    """Cancel the Telegram listener task. Called from lifespan shutdown."""
+    global _tg_task
+    if _tg_task and not _tg_task.done():
+        _tg_task.cancel()
+        await asyncio.gather(_tg_task, return_exceptions=True)
+    _tg_task = None
 
 
 async def _run_due_sources() -> None:

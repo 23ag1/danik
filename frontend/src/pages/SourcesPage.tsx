@@ -6,6 +6,7 @@ export function SourcesPage() {
   const [items, setItems] = useState<MonitoredSource[]>([]);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [sourceType, setSourceType] = useState<"rss" | "telegram">("rss");
   const [interval, setInterval] = useState(300);
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState<number | null>(null);
@@ -18,10 +19,11 @@ export function SourcesPage() {
     e.preventDefault();
     setError("");
     try {
-      const src = await api.createSource({ name, url, interval_sec: interval });
+      const src = await api.createSource({ name, url, source_type: sourceType, interval_sec: interval });
       setItems((prev) => [...prev, src]);
       setName("");
       setUrl("");
+      setSourceType("rss");
       setInterval(300);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Ошибка");
@@ -53,8 +55,8 @@ export function SourcesPage() {
   return (
     <section className="space-y-8">
       <header>
-        <h2 className="text-2xl font-semibold tracking-tight">RSS-источники</h2>
-        <p className="mt-1 text-sm text-zinc-500">Управление автоматическим мониторингом лент</p>
+        <h2 className="text-2xl font-semibold tracking-tight">Источники мониторинга</h2>
+        <p className="mt-1 text-sm text-zinc-500">RSS-ленты и Telegram-каналы</p>
       </header>
 
       <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
@@ -69,10 +71,21 @@ export function SourcesPage() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">URL ленты</label>
+          <label className="text-xs text-zinc-500">Тип</label>
+          <select
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+            value={sourceType}
+            onChange={(e) => setSourceType(e.target.value as "rss" | "telegram")}
+          >
+            <option value="rss">RSS</option>
+            <option value="telegram">Telegram</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-500">{sourceType === "telegram" ? "@канал или ID" : "URL ленты"}</label>
           <input
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm w-72"
-            placeholder="https://example.com/rss.xml"
+            placeholder={sourceType === "telegram" ? "@channel_name" : "https://example.com/rss.xml"}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             required
@@ -101,6 +114,7 @@ export function SourcesPage() {
         <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
           <tr>
             <th className="px-4 py-3">Название</th>
+            <th className="px-4 py-3">Тип</th>
             <th className="px-4 py-3">URL</th>
             <th className="px-4 py-3">Интервал</th>
             <th className="px-4 py-3">Последний запрос</th>
@@ -112,6 +126,11 @@ export function SourcesPage() {
           {items.map((src) => (
             <tr key={src.id} className="border-t border-zinc-100 hover:bg-zinc-50">
               <td className="px-4 py-3 font-medium">{src.name}</td>
+              <td className="px-4 py-3">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${src.source_type === "telegram" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"}`}>
+                  {src.source_type}
+                </span>
+              </td>
               <td className="px-4 py-3 font-mono text-xs text-zinc-500 max-w-xs truncate">
                 <a href={src.url} target="_blank" rel="noreferrer" className="hover:text-teal-700 underline">
                   {src.url}

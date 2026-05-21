@@ -6,11 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.event import Event
-from app.models.incident import Incident
 from app.models.seen_item import SeenItem
 from app.models.source import MonitoredSource
 from app.services.pipeline_runner import process_event_text
-from app.utils import hash_author, hash_item
+from app.utils import build_incident, hash_author, hash_item
 
 logger = logging.getLogger(__name__)
 
@@ -73,19 +72,8 @@ async def fetch_and_ingest(source: MonitoredSource, db: AsyncSession) -> int:
         await db.flush()  # get event.id
 
         if result["risk_score"] >= 0.3:
-            det = result["detection"]
-            incident = Incident(
-                event_id=event.id,
-                title=f"[RSS] {(getattr(entry, 'title', '') or raw_text)[:120]}",
-                risk_score=result["risk_score"],
-                severity=result["severity"],
-                rule_score=det.get("rule_score", 0.0),
-                ml_score=det.get("ml_score", 0.0),
-                graph_score=result.get("graph_score", 0.0),
-                anomaly_score=det.get("anomaly_score", 0.0),
-                rule_flags=det.get("triggered_rules", []),
-            )
-            db.add(incident)
+            title = f"[RSS] {(getattr(entry, 'title', '') or raw_text)[:120]}"
+            db.add(build_incident(event.id, title, result))
 
         db.add(SeenItem(item_hash=h))
         existing_hashes.add(h)  # guard against duplicate entries in same feed
