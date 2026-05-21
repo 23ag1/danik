@@ -321,3 +321,29 @@ async def test_delete_source_direct_404(db_session):
     with pytest.raises(HTTPException) as exc_info:
         await delete_source(source_id=99999, db=db_session)
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_trigger_fetch_direct(db_session):
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    from app.routers.sources import create_source, trigger_fetch
+    from app.schemas.source import SourceCreate
+
+    created = await create_source(body=SourceCreate(name="TrigFeed", url="https://trig.com/rss.xml"), db=db_session)
+
+    fake_entry = SimpleNamespace(title="Test", summary="body", link="http://t.com/1", id="http://t.com/1")
+    with patch("app.collectors.rss.feedparser.parse", return_value=SimpleNamespace(entries=[fake_entry])):
+        result = await trigger_fetch(source_id=created.id, db=db_session)
+
+    assert result["ingested"] == 1
+
+
+@pytest.mark.asyncio
+async def test_trigger_fetch_404(db_session):
+    from fastapi import HTTPException
+    from app.routers.sources import trigger_fetch
+
+    with pytest.raises(HTTPException) as exc_info:
+        await trigger_fetch(source_id=99999, db=db_session)
+    assert exc_info.value.status_code == 404
