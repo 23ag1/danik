@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import create_tables, engine
 from app.routers import events_router, incidents_router, sources_router
-from app.tasks.scheduler import collector_loop
+from app.tasks.scheduler import collector_loop, stop_collectors
 import app.models  # noqa: F401 — registers all models with Base.metadata
 
 FRONTEND_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
     yield
     task.cancel()
     await asyncio.gather(task, return_exceptions=True)
+    await stop_collectors()
     await engine.dispose()
 
 

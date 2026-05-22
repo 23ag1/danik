@@ -1,11 +1,14 @@
 from datetime import datetime
-from pydantic import BaseModel, HttpUrl
+from typing import Literal
+from pydantic import BaseModel
+
+SourceType = Literal["rss", "telegram"]
 
 
 class SourceCreate(BaseModel):
     name: str
     url: str
-    source_type: str = "rss"  # "rss" | "telegram"
+    source_type: SourceType = "rss"
     interval_sec: int = 300
     enabled: bool = True
 

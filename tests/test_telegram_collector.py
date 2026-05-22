@@ -1,7 +1,6 @@
 """Tests for Telegram collector."""
 import pytest
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import MagicMock
 
 from app.collectors.telegram import _tg_item_hash, _extract_urls, _ingest_message
 
@@ -46,21 +45,16 @@ def test_extract_urls_finds_text_url():
     assert _extract_urls(msg) == ["https://example.com"]
 
 
-# ── integration: _ingest_message ─────────────────────────────────────────────
+# ── integration: _ingest_message (db passed directly) ────────────────────────
 
 
 @pytest.mark.asyncio
 async def test_ingest_message_creates_event(db_session):
-    from app.models.event import Event
     from sqlalchemy import select
+    from app.models.event import Event
 
     msg = _make_message(text="Мошеннический кредит с накруткой процентов")
-
-    with patch("app.collectors.telegram.AsyncSessionLocal") as mock_sm:
-        mock_sm.return_value.__aenter__ = AsyncMock(return_value=db_session)
-        mock_sm.return_value.__aexit__ = AsyncMock(return_value=False)
-
-        result = await _ingest_message(111, "TestChannel", msg)
+    result = await _ingest_message(db_session, 111, "TestChannel", msg)
 
     assert result is True
     events = list((await db_session.execute(select(Event))).scalars().all())
@@ -72,12 +66,8 @@ async def test_ingest_message_creates_event(db_session):
 async def test_ingest_message_skips_duplicate(db_session):
     msg = _make_message(msg_id=99, text="Дублирующееся сообщение о фроде")
 
-    with patch("app.collectors.telegram.AsyncSessionLocal") as mock_sm:
-        mock_sm.return_value.__aenter__ = AsyncMock(return_value=db_session)
-        mock_sm.return_value.__aexit__ = AsyncMock(return_value=False)
-
-        first = await _ingest_message(111, "Chan", msg)
-        second = await _ingest_message(111, "Chan", msg)
+    first = await _ingest_message(db_session, 111, "Chan", msg)
+    second = await _ingest_message(db_session, 111, "Chan", msg)
 
     assert first is True
     assert second is False
@@ -86,13 +76,7 @@ async def test_ingest_message_skips_duplicate(db_session):
 @pytest.mark.asyncio
 async def test_ingest_message_skips_empty_text(db_session):
     msg = _make_message(text="")
-
-    with patch("app.collectors.telegram.AsyncSessionLocal") as mock_sm:
-        mock_sm.return_value.__aenter__ = AsyncMock(return_value=db_session)
-        mock_sm.return_value.__aexit__ = AsyncMock(return_value=False)
-
-        result = await _ingest_message(111, "Chan", msg)
-
+    result = await _ingest_message(db_session, 111, "Chan", msg)
     assert result is False
 
 
@@ -118,6 +102,16 @@ async def test_create_rss_source_default_type(async_client):
     })
     assert r.status_code == 201
     assert r.json()["source_type"] == "rss"
+
+
+@pytest.mark.asyncio
+async def test_create_source_invalid_type(async_client):
+    r = await async_client.post("/sources", json={
+        "name": "Bad",
+        "url": "https://bad.com/rss.xml",
+        "source_type": "vk",
+    })
+    assert r.status_code == 422
 
 
 @pytest.mark.asyncio
