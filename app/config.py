@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     risk_threshold_low: float = 0.3
     risk_threshold_high: float = 0.7
 
-    # Telegram (Telethon) — optional, leave empty to disable TG collector
-    tg_api_id: int = 0
-    tg_api_hash: str = ""
+    # Telegram (Telethon) — uses Telegram Desktop public credentials by default
+    tg_api_id: int = 2040
+    tg_api_hash: str = "b18441a1ff607e10a989891a5462e627"
     tg_session_name: str = "fraud_monitor_tg"
 
 
