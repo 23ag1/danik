@@ -24,7 +24,7 @@ export const api = {
     }),
   getEvents: () => request<Event[]>("/events"),
   getSources: () => request<MonitoredSource[]>("/sources"),
-  createSource: (body: { name: string; url: string; interval_sec?: number }) =>
+  createSource: (body: { name: string; url: string; source_type?: "rss" | "telegram"; interval_sec?: number }) =>
     request<MonitoredSource>("/sources", { method: "POST", body: JSON.stringify(body) }),
   patchSource: (id: number, body: { enabled?: boolean; interval_sec?: number }) =>
     request<MonitoredSource>(`/sources/${id}`, { method: "PATCH", body: JSON.stringify(body) }),

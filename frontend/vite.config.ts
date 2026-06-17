@@ -9,6 +9,7 @@ export default defineConfig({
     proxy: {
       "/events": "http://127.0.0.1:8888",
       "/incidents": "http://127.0.0.1:8888",
+      "/sources": "http://127.0.0.1:8888",
       "/health": "http://127.0.0.1:8888",
       "/docs": "http://127.0.0.1:8888",
     },

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /root/danik/fraud_monitor
+cd "$(dirname "$0")/.."
 source .venv/bin/activate
 
 chmod +x scripts/*.sh
