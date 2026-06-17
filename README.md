@@ -4,6 +4,16 @@
 
 **Стек:** FastAPI · SQLAlchemy · SQLite · scikit-learn · NetworkX · React · Vite
 
+## Установка одной командой
+
+```bash
+git clone https://github.com/23ag1/danik.git fraud_monitor && cd fraud_monitor && bash install.sh
+```
+
+Откроется на **http://localhost:8888** с демо-данными. Нужны: Python 3.10+, Node.js 18+.
+
+---
+
 ## Документация
 
 | Файл | Содержание |
