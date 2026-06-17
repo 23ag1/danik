@@ -72,20 +72,39 @@ if (-not $ready) { Write-Host "Server failed to start" -ForegroundColor Red; exi
 python scripts/seed_demo.py "http://127.0.0.1:$PORT"
 python scripts/seed_sources.py
 
+# Stop the temporary seed server and wait until the port is fully released
 $srvProc | Stop-Process -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 1
+for ($i = 0; $i -lt 10; $i++) {
+    try {
+        Invoke-WebRequest -Uri "http://127.0.0.1:$PORT/health" -UseBasicParsing -TimeoutSec 1 | Out-Null
+        Start-Sleep -Seconds 1   # still up, wait
+    } catch { break }            # down -> port free
+}
 
-# Final run
+# Final run: a separate visible window that stays open after this script exits
 Write-Host "--- starting server ---" -ForegroundColor Yellow
-Start-Process -FilePath ".venv\Scripts\uvicorn.exe" `
-    -ArgumentList "app.main:app --host 0.0.0.0 --port $PORT" `
-    -WindowStyle Hidden
+Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", "run.ps1"
+
+# Wait until the final server answers before opening the browser
+$ready = $false
+for ($i = 0; $i -lt 20; $i++) {
+    Start-Sleep -Seconds 1
+    try {
+        Invoke-WebRequest -Uri "http://127.0.0.1:$PORT/health" -UseBasicParsing -TimeoutSec 2 | Out-Null
+        $ready = $true; break
+    } catch {}
+}
 
 Write-Host ""
 Write-Host "======================================" -ForegroundColor Green
-Write-Host " Fraud Monitor is running!" -ForegroundColor Green
+if ($ready) {
+    Write-Host " Fraud Monitor is running!" -ForegroundColor Green
+} else {
+    Write-Host " Server is starting (check the new window)" -ForegroundColor Yellow
+}
 Write-Host " http://localhost:$PORT" -ForegroundColor Cyan
 Write-Host " Swagger: http://localhost:$PORT/docs" -ForegroundColor Cyan
+Write-Host " To restart later: powershell -ExecutionPolicy Bypass -File run.ps1" -ForegroundColor Gray
 Write-Host "======================================" -ForegroundColor Green
 
-Start-Process "http://localhost:$PORT"
+if ($ready) { Start-Process "http://localhost:$PORT" }
