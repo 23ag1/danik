@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Загрузить demo_events.csv через POST /events."""
+
 import csv
 import sys
 from pathlib import Path
 
 import httpx
+
+# Force UTF-8 console output (Windows consoles default to cp866/cp1251)
+sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parents[1]
 CSV_PATH = ROOT / "data" / "demo_events.csv"
@@ -32,7 +36,9 @@ def main() -> None:
             r.raise_for_status()
             data = r.json()
             ok += 1
-            print(f"#{data['id']} risk={data['risk_score']:.2f} incident={data.get('incident_id')}")
+            print(
+                f"#{data['id']} risk={data['risk_score']:.2f} incident={data.get('incident_id')}"
+            )
 
     print(f"готово: {ok} событий")
 
