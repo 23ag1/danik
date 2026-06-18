@@ -4,38 +4,33 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select, update
 
-from app.collectors.rss import fetch_and_ingest
+from app.collectors import collect_source
 from app.database import AsyncSessionLocal
 from app.models.source import MonitoredSource
 
 logger = logging.getLogger(__name__)
 
 _CHECK_INTERVAL = 60  # seconds between scheduler ticks
-_tg_task: asyncio.Task | None = None
 
 
 async def collector_loop() -> None:
-    """Background task: RSS polling + optional Telegram listener."""
-    global _tg_task
-    logger.info("collector_loop started")
-    from app.collectors.telegram import start_telegram_collector
+    """Background task: poll all due sources (RSS + Telegram web preview).
 
-    _tg_task = asyncio.create_task(start_telegram_collector())
+    Telegram channels are collected via t.me/s/ web preview through the same
+    poll loop, so newly added channels are picked up on the next tick without
+    any restart or Telegram login."""
+    logger.info("collector_loop started")
     while True:
-        await asyncio.sleep(_CHECK_INTERVAL)
         try:
             await _run_due_sources()
         except Exception as exc:
             logger.error("collector_loop tick error: %s", exc)
+        await asyncio.sleep(_CHECK_INTERVAL)
 
 
 async def stop_collectors() -> None:
-    """Cancel the Telegram listener task. Called from lifespan shutdown."""
-    global _tg_task
-    if _tg_task and not _tg_task.done():
-        _tg_task.cancel()
-        await asyncio.gather(_tg_task, return_exceptions=True)
-    _tg_task = None
+    """Kept for lifespan shutdown compatibility — no background listener anymore."""
+    return None
 
 
 async def _run_due_sources() -> None:
@@ -55,7 +50,7 @@ async def _run_due_sources() -> None:
             continue
 
         async with AsyncSessionLocal() as db:
-            await fetch_and_ingest(source, db)
+            await collect_source(source, db)
             await db.execute(
                 update(MonitoredSource)
                 .where(MonitoredSource.id == source.id)

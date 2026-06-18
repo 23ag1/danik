@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.collectors.rss import fetch_and_ingest
+from app.collectors import collect_source
 from app.database import get_db
 from app.models.source import MonitoredSource
 from app.schemas.source import SourceCreate, SourcePatch, SourceRead
@@ -63,5 +63,5 @@ async def trigger_fetch(source_id: int, db: AsyncSession = Depends(get_db)):
     source = await db.get(MonitoredSource, source_id)
     if source is None:
         raise HTTPException(status_code=404, detail="Source not found")
-    ingested = await fetch_and_ingest(source, db)
+    ingested = await collect_source(source, db)
     return {"ingested": ingested}

@@ -77,7 +77,7 @@ async def test_run_due_sources_calls_ingest_for_new_source():
     with (
         patch("app.tasks.scheduler.AsyncSessionLocal", return_value=fake_cm),
         patch(
-            "app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock
+            "app.tasks.scheduler.collect_source", new_callable=AsyncMock
         ) as mock_ingest,
     ):
         await _run_due_sources()
@@ -108,7 +108,7 @@ async def test_run_due_sources_skips_recently_fetched():
             "app.tasks.scheduler.AsyncSessionLocal", return_value=FakeContextManager()
         ),
         patch(
-            "app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock
+            "app.tasks.scheduler.collect_source", new_callable=AsyncMock
         ) as mock_ingest,
     ):
         await _run_due_sources()
@@ -142,7 +142,7 @@ async def test_run_due_sources_fetches_overdue_source():
     with (
         patch("app.tasks.scheduler.AsyncSessionLocal", FakeContextManager),
         patch(
-            "app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock
+            "app.tasks.scheduler.collect_source", new_callable=AsyncMock
         ) as mock_ingest,
     ):
         await _run_due_sources()
@@ -171,7 +171,7 @@ async def test_run_due_sources_handles_ingest_error_gracefully():
     with (
         patch("app.tasks.scheduler.AsyncSessionLocal", FakeContextManager),
         patch(
-            "app.tasks.scheduler.fetch_and_ingest",
+            "app.tasks.scheduler.collect_source",
             new_callable=AsyncMock,
             side_effect=Exception("network error"),
         ),
