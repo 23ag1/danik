@@ -30,3 +30,9 @@ def ensure_model_trained(dataset_path: Path | None = None) -> dict[str, float]:
 
         return joblib.load(metrics_path)
     return train_model(dataset_path)
+
+
+if __name__ == "__main__":
+    # `python -m app.ml.train` always retrains from the current dataset.
+    metrics = train_model()
+    print("Model trained:", {k: round(v, 3) for k, v in metrics.items()})

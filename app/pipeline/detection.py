@@ -7,9 +7,14 @@ FRAUD_KEYWORDS: tuple[str, ...] = (
     "срочно",
     "бесплатно",
     "выигрыш",
+    "выиграл",
+    "розыгрыш",
+    "приз",
     "перевод",
+    "перевед",
     "комиссия",
-    "блокировка",
+    "блокировк",
+    "разблокир",
     "счёт",
     "счет",
     "паспорт",
@@ -17,6 +22,8 @@ FRAUD_KEYWORDS: tuple[str, ...] = (
     "мошенник",
     "возврат",
     "процент",
+    "вложени",
+    "оплатите",
 )
 
 _RULE_STEP = 0.2
@@ -50,13 +57,21 @@ def _ml_score(clean_text: str, features: dict) -> float:
 
 
 def _anomaly_stub(features: dict) -> float:
+    """Score genuinely suspicious text shape — NOT length.
+
+    Long normal posts (news) are not anomalies. We flag patterns scams use:
+    shouting (CAPS), exclamation spam, and contact-grab combos (url + phone)."""
     score = 0.0
-    if features.get("text_len", 0) > 300:
+    if features.get("uppercase_ratio", 0.0) >= 0.3:
+        score += 0.4
+    if features.get("exclamation_count", 0) >= 3:
         score += 0.3
-    if features.get("word_count", 0) > 50:
+    # Contact-grab: a phone number in a channel post is a classic scam vector
+    # (normal news posts don't ask you to call a number)
+    if features.get("has_phone"):
+        score += 0.3
+    if features.get("has_url"):
         score += 0.2
-    if features.get("exclamation_count", 0) >= 5:
-        score += 0.3
     return min(1.0, score)
 
 

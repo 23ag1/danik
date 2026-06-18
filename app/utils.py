@@ -22,5 +22,5 @@ def build_incident(event_id: int, title: str, pipeline_result: dict) -> Incident
         ml_score=det.get("ml_score", 0.0),
         graph_score=pipeline_result.get("graph_score", 0.0),
         anomaly_score=det.get("anomaly_score", 0.0),
-        rule_flags=det.get("triggered_rules", []),
+        rule_flags=det.get("rule_flags", []),
     )
