@@ -31,3 +31,7 @@ docs/dip_extract.txt
 docs/dip_sections.txt
 docs/dip_requirements_extract.txt
 docs/section_*.txt
+
+# Telegram session (personal auth tokens)
+*.session
+*.session-journal
