@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     risk_threshold_low: float = 0.3
     risk_threshold_high: float = 0.7
 
+    # Recall-first: create an incident at >= incident_threshold, BELOW the
+    # low/medium severity boundary. Missing fraud (false negative) is worse than
+    # surfacing a borderline item for an analyst to dismiss. Incidents in the
+    # 0.2-0.3 band are flagged as "low" severity = low-confidence, review.
+    incident_threshold: float = 0.2
+
     # Telegram (Telethon) — uses Telegram Desktop public credentials by default
     tg_api_id: int = 2040
     tg_api_hash: str = "b18441a1ff607e10a989891a5462e627"

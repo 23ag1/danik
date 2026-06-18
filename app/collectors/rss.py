@@ -5,6 +5,7 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.event import Event
 from app.models.seen_item import SeenItem
 from app.models.source import MonitoredSource
@@ -99,7 +100,7 @@ async def fetch_and_ingest(source: MonitoredSource, db: AsyncSession) -> int:
         db.add(event)
         await db.flush()  # get event.id
 
-        if result["risk_score"] >= 0.3:
+        if result["risk_score"] >= settings.incident_threshold:
             title = f"[RSS] {(getattr(entry, 'title', '') or raw_text)[:120]}"
             db.add(build_incident(event.id, title, result))
 

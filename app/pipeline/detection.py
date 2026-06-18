@@ -1,13 +1,13 @@
 from app.ml.model import load_model, predict_fraud_proba
 from app.pipeline.preprocessing import preprocess_text
 
-# High-precision fraud markers ONLY. Generic financial words (кредит, счёт,
-# процент, перевод, налог...) and promo words (розыгрыш, приз, бесплатно) were
-# REMOVED: they appear constantly in legitimate finance news and ads, which is
-# exactly what was producing false positives. The ML model (trained on 21k real
-# messages) is the primary signal; these rules only add interpretable evidence
-# for terms that almost never occur outside scams.
+# RECALL-FIRST keyword net. Priority is "miss no fraud", so this list is broad:
+# it covers both unambiguous fraud markers AND the financial/promo vocabulary
+# that scams ride on. This WILL also fire on some legitimate ads/finance news
+# (acceptable trade-off per requirements — false positives are tolerated, false
+# negatives are not). The ML model is the primary signal; rules are a safety net.
 FRAUD_KEYWORDS: tuple[str, ...] = (
+    # unambiguous fraud / phishing
     "мошенник",
     "обман",
     "развод",
@@ -18,6 +18,37 @@ FRAUD_KEYWORDS: tuple[str, ...] = (
     "без вложени",
     "пассивный доход",
     "гарантированный доход",
+    "код из смс",
+    "код из сообщения",
+    "cvv",
+    "переведите комисс",
+    "оплатите налог",
+    "оплатите сбор",
+    "оплатите комисс",
+    "таможенн",
+    "обнал",
+    "сдаю карту",
+    # high-frequency scam vocabulary (also appears in ads — tolerated)
+    "срочно",
+    "выигра",
+    "выигрыш",
+    "розыгрыш",
+    "приз",
+    "бесплатно",
+    "кредит",
+    "займ",
+    "блокировк",
+    "заблокирован",
+    "комиссия",
+    "перевод",
+    "переведите",
+    "налог",
+    "паспорт",
+    "вложени",
+    "доход от",
+    "заработок",
+    "удалённа",
+    "удаленна",
 )
 
 _RULE_STEP = 0.2

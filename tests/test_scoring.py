@@ -44,3 +44,12 @@ def test_severity_at_low_threshold():
 def test_severity_at_high_threshold():
     assert risk_to_severity(0.7) == Severity.high
     assert risk_to_severity(0.69) == Severity.medium
+
+
+def test_incident_threshold_is_recall_first():
+    """Incidents are created BELOW the low/medium severity boundary so that
+    borderline fraud (0.2-0.3) is surfaced for review, not silently dropped."""
+    from app.config import settings
+
+    assert settings.incident_threshold < settings.risk_threshold_low
+    assert settings.incident_threshold > 0.0

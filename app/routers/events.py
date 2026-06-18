@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.models.enums import AuditEntityType, Severity
 from app.models.event import Event
@@ -61,7 +62,7 @@ async def create_event(body: EventCreate, db: AsyncSession = Depends(get_db)):
     await db.flush()
 
     incident_id = None
-    if severity != Severity.low:
+    if risk_score >= settings.incident_threshold:
         incident = Incident(
             event_id=event.id,
             title=_incident_title(severity, detection["rule_flags"]),
