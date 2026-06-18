@@ -7,6 +7,7 @@ via SeenItem, saves Event + Incident to DB.
 Requires: TG_API_ID, TG_API_HASH in .env. Run scripts/auth_tg.py once to create session.
 TG sources are resolved once at startup; add new channels via /sources then restart.
 """
+
 import logging
 
 from sqlalchemy import select
@@ -32,10 +33,14 @@ def _tg_item_hash(channel_id: int, message_id: int) -> str:
 def _extract_urls(message) -> list[str]:
     if not message.entities:
         return []
-    return [e.url for e in message.entities if isinstance(e, MessageEntityTextUrl) and e.url]
+    return [
+        e.url for e in message.entities if isinstance(e, MessageEntityTextUrl) and e.url
+    ]
 
 
-async def _ingest_message(db: AsyncSession, channel_id: int, channel_name: str, message) -> bool:
+async def _ingest_message(
+    db: AsyncSession, channel_id: int, channel_name: str, message
+) -> bool:
     """Process one TG message. Returns True if new, False if duplicate or empty."""
     h = _tg_item_hash(channel_id, message.id)
 
@@ -56,8 +61,12 @@ async def _ingest_message(db: AsyncSession, channel_id: int, channel_name: str, 
         raw_text=raw_text,
         clean_text=result["clean_text"],
         url=urls[0] if urls else None,
-        meta={"tg_message_id": message.id, "tg_channel_id": channel_id,
-              "risk_score": result["risk_score"], "severity": result["severity"]},
+        meta={
+            "tg_message_id": message.id,
+            "tg_channel_id": channel_id,
+            "risk_score": result["risk_score"],
+            "severity": result["severity"],
+        },
     )
     db.add(event)
     await db.flush()
@@ -82,7 +91,9 @@ async def _load_telegram_sources() -> list[MonitoredSource]:
 
 
 def create_client() -> TelegramClient:
-    return TelegramClient(settings.tg_session_name, settings.tg_api_id, settings.tg_api_hash)
+    return TelegramClient(
+        settings.tg_session_name, settings.tg_api_id, settings.tg_api_hash
+    )
 
 
 async def start_telegram_collector() -> None:
@@ -114,7 +125,14 @@ async def start_telegram_collector() -> None:
                 logger.error("Cannot resolve '%s' (%s): %s", src.name, src.url, exc)
         return ids
 
-    await client.start()
+    await client.connect()
+    if not await client.is_user_authorized():
+        logger.error(
+            "Telegram session not authorized — run `python scripts/auth_tg.py` "
+            "to log in. Telegram collector disabled."
+        )
+        await client.disconnect()
+        return
     logger.info("Telegram client connected")
 
     channel_ids = await _resolve_sources()
@@ -128,7 +146,9 @@ async def start_telegram_collector() -> None:
         for cid in channel_ids:
             try:
                 async for msg in client.iter_messages(cid, limit=50):
-                    if not await _ingest_message(db, cid, channel_map.get(cid, str(cid)), msg):
+                    if not await _ingest_message(
+                        db, cid, channel_map.get(cid, str(cid)), msg
+                    ):
                         break
             except Exception as exc:
                 logger.error("Backfill error for channel %d: %s", cid, exc)

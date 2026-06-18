@@ -1,7 +1,7 @@
 import logging
-from datetime import datetime, timezone
 
 import feedparser
+import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,15 +28,43 @@ def _build_raw_text(entry: object) -> str:
     return f"{title} {summary}".strip()
 
 
+_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; FraudMonitor/1.0; +https://github.com/23ag1/danik)",
+    # Some feeds (e.g. RBC) stall on compressed responses — request uncompressed
+    "Accept-Encoding": "identity",
+}
+
+
+async def _fetch_feed_bytes(url: str, attempts: int = 2) -> bytes | None:
+    """Fetch raw feed bytes via async httpx (timeout + redirects + browser UA).
+    feedparser's built-in fetch is blocking and has no timeout — do not use it.
+    Retries once: some feeds (RBC) intermittently time out on the first request."""
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            async with httpx.AsyncClient(
+                timeout=30.0, follow_redirects=True, headers=_HEADERS
+            ) as client:
+                resp = await client.get(url)
+                resp.raise_for_status()
+                return resp.content
+        except Exception as exc:
+            last_exc = exc
+            logger.warning(
+                "RSS fetch attempt %d/%d failed for %s: %s", attempt, attempts, url, exc
+            )
+    logger.error("RSS fetch error for %s: %s", url, last_exc)
+    return None
+
+
 async def fetch_and_ingest(source: MonitoredSource, db: AsyncSession) -> int:
     """Pull one RSS feed, skip duplicates, run pipeline, persist events/incidents.
     Returns number of new items ingested."""
-    try:
-        parsed = feedparser.parse(source.url)
-    except Exception as exc:
-        logger.error("feedparser error for %s: %s", source.url, exc)
+    content = await _fetch_feed_bytes(source.url)
+    if content is None:
         return 0
 
+    parsed = feedparser.parse(content)
     entries = parsed.entries
     if not entries:
         return 0

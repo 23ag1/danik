@@ -31,7 +31,7 @@ SOURCES = [
     },
     {
         "name": "ЦБ РФ Пресс-релизы",
-        "url": "https://www.cbr.ru/rss/press/",
+        "url": "https://www.cbr.ru/rss/RssPress",
         "interval_sec": 3600,
     },
 ]

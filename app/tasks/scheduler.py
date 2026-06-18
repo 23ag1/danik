@@ -19,6 +19,7 @@ async def collector_loop() -> None:
     global _tg_task
     logger.info("collector_loop started")
     from app.collectors.telegram import start_telegram_collector
+
     _tg_task = asyncio.create_task(start_telegram_collector())
     while True:
         await asyncio.sleep(_CHECK_INTERVAL)
@@ -47,6 +48,9 @@ async def _run_due_sources() -> None:
 
     for source in sources:
         last = source.last_fetched_at
+        # SQLite returns naive datetimes — assume UTC to compare with offset-aware now
+        if last is not None and last.tzinfo is None:
+            last = last.replace(tzinfo=timezone.utc)
         if last is not None and (now - last).total_seconds() < source.interval_sec:
             continue
 

@@ -1,4 +1,5 @@
 """Tests for collector scheduler and sources CRUD coverage."""
+
 import asyncio
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
@@ -53,9 +54,7 @@ async def test_run_due_sources_calls_ingest_for_new_source():
     class FakeContextManager:
         def __init__(self):
             self.session = AsyncMock()
-            self.session.execute = AsyncMock(
-                side_effect=self._execute_side_effect
-            )
+            self.session.execute = AsyncMock(side_effect=self._execute_side_effect)
             self.session.commit = AsyncMock()
             self._call_count = 0
 
@@ -77,7 +76,9 @@ async def test_run_due_sources_calls_ingest_for_new_source():
 
     with (
         patch("app.tasks.scheduler.AsyncSessionLocal", return_value=fake_cm),
-        patch("app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock) as mock_ingest,
+        patch(
+            "app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock
+        ) as mock_ingest,
     ):
         await _run_due_sources()
 
@@ -103,8 +104,12 @@ async def test_run_due_sources_skips_recently_fetched():
             return False
 
     with (
-        patch("app.tasks.scheduler.AsyncSessionLocal", return_value=FakeContextManager()),
-        patch("app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock) as mock_ingest,
+        patch(
+            "app.tasks.scheduler.AsyncSessionLocal", return_value=FakeContextManager()
+        ),
+        patch(
+            "app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock
+        ) as mock_ingest,
     ):
         await _run_due_sources()
 
@@ -136,7 +141,9 @@ async def test_run_due_sources_fetches_overdue_source():
 
     with (
         patch("app.tasks.scheduler.AsyncSessionLocal", FakeContextManager),
-        patch("app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock) as mock_ingest,
+        patch(
+            "app.tasks.scheduler.fetch_and_ingest", new_callable=AsyncMock
+        ) as mock_ingest,
     ):
         await _run_due_sources()
 
@@ -187,10 +194,13 @@ async def test_list_sources_empty(async_client):
 
 @pytest.mark.asyncio
 async def test_create_source_defaults(async_client):
-    r = await async_client.post("/sources", json={
-        "name": "Коммерсантъ",
-        "url": "https://www.kommersant.ru/RSS/section-finance.xml",
-    })
+    r = await async_client.post(
+        "/sources",
+        json={
+            "name": "Коммерсантъ",
+            "url": "https://www.kommersant.ru/RSS/section-finance.xml",
+        },
+    )
     assert r.status_code == 201
     data = r.json()
     assert data["interval_sec"] == 300
@@ -200,12 +210,15 @@ async def test_create_source_defaults(async_client):
 
 @pytest.mark.asyncio
 async def test_create_source_custom_interval(async_client):
-    r = await async_client.post("/sources", json={
-        "name": "РБК",
-        "url": "https://rbc.ru/rss/news.rss",
-        "interval_sec": 120,
-        "enabled": False,
-    })
+    r = await async_client.post(
+        "/sources",
+        json={
+            "name": "РБК",
+            "url": "https://rbc.ru/rss/news.rss",
+            "interval_sec": 120,
+            "enabled": False,
+        },
+    )
     assert r.status_code == 201
     data = r.json()
     assert data["interval_sec"] == 120
@@ -214,10 +227,13 @@ async def test_create_source_custom_interval(async_client):
 
 @pytest.mark.asyncio
 async def test_patch_source_interval(async_client):
-    r = await async_client.post("/sources", json={
-        "name": "Test",
-        "url": "https://example.com/feed.xml",
-    })
+    r = await async_client.post(
+        "/sources",
+        json={
+            "name": "Test",
+            "url": "https://example.com/feed.xml",
+        },
+    )
     sid = r.json()["id"]
 
     r = await async_client.patch(f"/sources/{sid}", json={"interval_sec": 900})
@@ -228,10 +244,13 @@ async def test_patch_source_interval(async_client):
 
 @pytest.mark.asyncio
 async def test_patch_source_toggle_off(async_client):
-    r = await async_client.post("/sources", json={
-        "name": "Test2",
-        "url": "https://example2.com/feed.xml",
-    })
+    r = await async_client.post(
+        "/sources",
+        json={
+            "name": "Test2",
+            "url": "https://example2.com/feed.xml",
+        },
+    )
     sid = r.json()["id"]
 
     r = await async_client.patch(f"/sources/{sid}", json={"enabled": False})
@@ -241,10 +260,13 @@ async def test_patch_source_toggle_off(async_client):
 
 @pytest.mark.asyncio
 async def test_delete_source_then_not_listed(async_client):
-    r = await async_client.post("/sources", json={
-        "name": "ToDelete",
-        "url": "https://todelete.com/feed.xml",
-    })
+    r = await async_client.post(
+        "/sources",
+        json={
+            "name": "ToDelete",
+            "url": "https://todelete.com/feed.xml",
+        },
+    )
     sid = r.json()["id"]
 
     await async_client.delete(f"/sources/{sid}")
@@ -259,6 +281,7 @@ async def test_delete_source_then_not_listed(async_client):
 @pytest.mark.asyncio
 async def test_list_sources_direct(db_session):
     from app.routers.sources import list_sources
+
     result = await list_sources(db=db_session)
     assert result == []
 
@@ -268,7 +291,9 @@ async def test_create_source_direct(db_session):
     from app.routers.sources import create_source
     from app.schemas.source import SourceCreate
 
-    body = SourceCreate(name="Direct Feed", url="https://direct.com/rss.xml", interval_sec=600)
+    body = SourceCreate(
+        name="Direct Feed", url="https://direct.com/rss.xml", interval_sec=600
+    )
     result = await create_source(body=body, db=db_session)
     assert result.name == "Direct Feed"
     assert result.interval_sec == 600
@@ -283,7 +308,11 @@ async def test_patch_source_direct(db_session):
     body = SourceCreate(name="PatchFeed", url="https://patch.com/rss.xml")
     created = await create_source(body=body, db=db_session)
 
-    patched = await patch_source(source_id=created.id, body=SourcePatch(enabled=False, interval_sec=120), db=db_session)
+    patched = await patch_source(
+        source_id=created.id,
+        body=SourcePatch(enabled=False, interval_sec=120),
+        db=db_session,
+    )
     assert patched.enabled is False
     assert patched.interval_sec == 120
 
@@ -295,7 +324,9 @@ async def test_patch_source_direct_404(db_session):
     from app.schemas.source import SourcePatch
 
     with pytest.raises(HTTPException) as exc_info:
-        await patch_source(source_id=99999, body=SourcePatch(enabled=False), db=db_session)
+        await patch_source(
+            source_id=99999, body=SourcePatch(enabled=False), db=db_session
+        )
     assert exc_info.value.status_code == 404
 
 
@@ -330,10 +361,24 @@ async def test_trigger_fetch_direct(db_session):
     from app.routers.sources import create_source, trigger_fetch
     from app.schemas.source import SourceCreate
 
-    created = await create_source(body=SourceCreate(name="TrigFeed", url="https://trig.com/rss.xml"), db=db_session)
+    created = await create_source(
+        body=SourceCreate(name="TrigFeed", url="https://trig.com/rss.xml"),
+        db=db_session,
+    )
 
-    fake_entry = SimpleNamespace(title="Test", summary="body", link="http://t.com/1", id="http://t.com/1")
-    with patch("app.collectors.rss.feedparser.parse", return_value=SimpleNamespace(entries=[fake_entry])):
+    fake_entry = SimpleNamespace(
+        title="Test", summary="body", link="http://t.com/1", id="http://t.com/1"
+    )
+    with (
+        patch(
+            "app.collectors.rss._fetch_feed_bytes",
+            new=AsyncMock(return_value=b"<rss/>"),
+        ),
+        patch(
+            "app.collectors.rss.feedparser.parse",
+            return_value=SimpleNamespace(entries=[fake_entry]),
+        ),
+    ):
         result = await trigger_fetch(source_id=created.id, db=db_session)
 
     assert result["ingested"] == 1

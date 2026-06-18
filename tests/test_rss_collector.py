@@ -1,7 +1,8 @@
 """Tests for RSS collector and sources API."""
+
 import hashlib
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -16,7 +17,12 @@ from app.models.incident import Incident
 # ── helpers ─────────────────────────────────────────────────────────────────
 
 
-def _make_entry(title="Fraud alert", summary="Someone did something bad", link="http://x.com/1", entry_id="http://x.com/1"):
+def _make_entry(
+    title="Fraud alert",
+    summary="Someone did something bad",
+    link="http://x.com/1",
+    entry_id="http://x.com/1",
+):
     return SimpleNamespace(title=title, summary=summary, link=link, id=entry_id)
 
 
@@ -33,6 +39,19 @@ def _make_source(url="http://feed.example.com/rss", name="TestFeed"):
 
 def _fake_parsed(entries):
     return SimpleNamespace(entries=entries)
+
+
+def _patch_feed(entries):
+    """Patch both the async byte-fetch and feedparser.parse for a fake feed."""
+    return (
+        patch(
+            "app.collectors.rss._fetch_feed_bytes",
+            new=AsyncMock(return_value=b"<rss/>"),
+        ),
+        patch(
+            "app.collectors.rss.feedparser.parse", return_value=_fake_parsed(entries)
+        ),
+    )
 
 
 # ── unit tests: pure functions ───────────────────────────────────────────────
@@ -75,14 +94,18 @@ def test_author_hash_is_sha256_of_id():
 @pytest.mark.asyncio
 async def test_fetch_and_ingest_creates_event(db_session):
     source = _make_source()
-    entry = _make_entry(title="Мошенничество", summary="Детали мошеннической схемы с кредитами")
+    entry = _make_entry(
+        title="Мошенничество", summary="Детали мошеннической схемы с кредитами"
+    )
 
-    with patch("app.collectors.rss.feedparser.parse", return_value=_fake_parsed([entry])):
+    p_bytes, p_parse = _patch_feed([entry])
+    with p_bytes, p_parse:
         count = await fetch_and_ingest(source, db_session)
 
     assert count == 1
 
     from sqlalchemy import select
+
     events = list((await db_session.execute(select(Event))).scalars().all())
     assert len(events) == 1
     assert "Мошенничество" in events[0].raw_text
@@ -94,7 +117,8 @@ async def test_fetch_and_ingest_skips_duplicate(db_session):
     source = _make_source()
     entry = _make_entry()
 
-    with patch("app.collectors.rss.feedparser.parse", return_value=_fake_parsed([entry])):
+    p_bytes, p_parse = _patch_feed([entry])
+    with p_bytes, p_parse:
         first = await fetch_and_ingest(source, db_session)
         second = await fetch_and_ingest(source, db_session)
 
@@ -107,19 +131,24 @@ async def test_fetch_and_ingest_seen_item_persisted(db_session):
     source = _make_source()
     entry = _make_entry()
 
-    with patch("app.collectors.rss.feedparser.parse", return_value=_fake_parsed([entry])):
+    p_bytes, p_parse = _patch_feed([entry])
+    with p_bytes, p_parse:
         await fetch_and_ingest(source, db_session)
 
     from sqlalchemy import select
+
     seen = list((await db_session.execute(select(SeenItem))).scalars().all())
     assert len(seen) == 1
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_ingest_feedparser_error_returns_zero(db_session):
+async def test_fetch_and_ingest_fetch_failure_returns_zero(db_session):
+    """Network/fetch failure -> _fetch_feed_bytes returns None -> ingest 0."""
     source = _make_source()
 
-    with patch("app.collectors.rss.feedparser.parse", side_effect=Exception("timeout")):
+    with patch(
+        "app.collectors.rss._fetch_feed_bytes", new=AsyncMock(return_value=None)
+    ):
         count = await fetch_and_ingest(source, db_session)
 
     assert count == 0
@@ -130,7 +159,8 @@ async def test_fetch_and_ingest_empty_text_skipped(db_session):
     source = _make_source()
     entry = SimpleNamespace(title="", link="http://x.com/2", id="http://x.com/2")
 
-    with patch("app.collectors.rss.feedparser.parse", return_value=_fake_parsed([entry])):
+    p_bytes, p_parse = _patch_feed([entry])
+    with p_bytes, p_parse:
         count = await fetch_and_ingest(source, db_session)
 
     assert count == 0
@@ -142,11 +172,14 @@ async def test_fetch_and_ingest_empty_text_skipped(db_session):
 @pytest.mark.asyncio
 async def test_sources_crud(async_client):
     # create
-    r = await async_client.post("/sources", json={
-        "name": "Test Feed",
-        "url": "http://example.com/rss.xml",
-        "interval_sec": 600,
-    })
+    r = await async_client.post(
+        "/sources",
+        json={
+            "name": "Test Feed",
+            "url": "http://example.com/rss.xml",
+            "interval_sec": 600,
+        },
+    )
     assert r.status_code == 201
     data = r.json()
     assert data["name"] == "Test Feed"
