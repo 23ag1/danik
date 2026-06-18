@@ -30,7 +30,7 @@ async def test_post_event_masks_pii_and_creates_incident(async_client: AsyncClie
         json={
             "source": "vk",
             "user_id": "user-002",
-            "raw_text": "СРОЧНО кредит! звони +7 (999) 123-45-67 https://scam.ru",
+            "raw_text": "Удалённая работа доход от 250 долларов в день звони +7 (999) 123-45-67 https://scam.ru",
         },
     )
     assert response.status_code == 201
@@ -49,7 +49,7 @@ async def test_post_event_stores_graph_score_on_incident(async_client: AsyncClie
         json={
             "source": "telegram",
             "user_id": "graph-user-1",
-            "raw_text": "срочно кредит займ паспорт налог",
+            "raw_text": "инвестируй сейчас гарантированный доход 300 процентов без вложений пиши в лс",
         },
     )
     response = await async_client.get("/incidents")
@@ -64,7 +64,7 @@ async def test_get_incidents(async_client: AsyncClient):
         json={
             "source": "telegram",
             "user_id": "user-003",
-            "raw_text": "срочно займ кредит перевод комиссия",
+            "raw_text": "ищу людей для сотрудничества удалённо доход от 1000 долларов в неделю пиши в личку",
         },
     )
     response = await async_client.get("/incidents")
@@ -81,7 +81,7 @@ async def test_patch_incident_status(async_client: AsyncClient):
         json={
             "source": "telegram",
             "user_id": "user-004",
-            "raw_text": "СРОЧНО кредит займ паспорт налог! https://scam.ru +7 (999) 123-45-67",
+            "raw_text": "Удалённая работа доход от 250 долларов в день! https://scam.ru +7 (999) 123-45-67",
         },
     )
     incident_id = created.json()["incident_id"]

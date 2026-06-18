@@ -16,10 +16,24 @@ def model_paths() -> tuple[Path, Path]:
 
 
 def build_pipeline() -> Pipeline:
+    # char_wb n-grams: robust to Russian morphology AND the latin/cyrillic
+    # letter-swapping obfuscation that spammers use (e.g. "зapaбoтoк").
     return Pipeline(
         [
-            ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, max_features=5000)),
-            ("clf", LogisticRegression(max_iter=1000, class_weight="balanced")),
+            (
+                "tfidf",
+                TfidfVectorizer(
+                    analyzer="char_wb",
+                    ngram_range=(2, 4),
+                    min_df=3,
+                    max_features=30000,
+                    lowercase=True,
+                ),
+            ),
+            (
+                "clf",
+                LogisticRegression(max_iter=2000, class_weight="balanced", C=4.0),
+            ),
         ]
     )
 

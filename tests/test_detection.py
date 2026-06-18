@@ -10,8 +10,8 @@ def test_rules_no_keywords():
 
 
 def test_rules_single_keyword():
-    result = run_detection("нужен срочно кредит", {})
-    assert "срочно" in result["rule_flags"]
+    result = run_detection("это мошенник звонит и угрожает", {})
+    assert "мошенник" in result["rule_flags"]
     assert result["rule_score"] > 0.0
 
 
@@ -23,7 +23,12 @@ def test_rules_multiple_keywords_capped():
 
 
 def test_ml_high_risk_fraud_text():
-    features = {"has_url": False, "has_phone": False, "exclamation_count": 0, "uppercase_ratio": 0.0}
+    features = {
+        "has_url": False,
+        "has_phone": False,
+        "exclamation_count": 0,
+        "uppercase_ratio": 0.0,
+    }
     result = run_detection(
         "срочно кредит займ без отказа перевод комиссия",
         features,
@@ -32,7 +37,12 @@ def test_ml_high_risk_fraud_text():
 
 
 def test_ml_low_risk_normal_text():
-    features = {"has_url": False, "has_phone": False, "exclamation_count": 0, "uppercase_ratio": 0.0}
+    features = {
+        "has_url": False,
+        "has_phone": False,
+        "exclamation_count": 0,
+        "uppercase_ratio": 0.0,
+    }
     result = run_detection(
         "спасибо за консультацию по вкладу всё понятно",
         features,
